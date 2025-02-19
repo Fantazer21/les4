@@ -1,0 +1,30 @@
+{
+  "name": "express-app",
+  "version": "1.0.0",
+  "description": "Express application",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
+    "eslint-config-prettier": "^10.0.1",
+    "express": "^4.18.2",
+    "mongodb": "^6.13.0",
+    "prettier": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.1",
+    "dotenv": "^16.4.7",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

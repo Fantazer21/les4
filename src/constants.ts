@@ -1,0 +1,12 @@
+export const BLOG_VALIDATION = {
+  NAME_MAX_LENGTH: 15,
+  DESCRIPTION_MAX_LENGTH: 500,
+  WEBSITE_URL_MAX_LENGTH: 100,
+  WEBSITE_URL_PATTERN: /^https:\/\/([a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)*\/?$/,
+} as const;
+
+export const POST_VALIDATION = {
+  TITLE_MAX_LENGTH: 30,
+  SHORT_DESCRIPTION_MAX_LENGTH: 100,
+  CONTENT_MAX_LENGTH: 1000,
+} as const;
