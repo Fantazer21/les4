@@ -6,7 +6,6 @@ dotenv.config();
 
 const MONGO_URI = process.env.MONGO_URI;
 
-//test
 const DB_NAME = 'it-incubator';
 const COLLECTIONS = {
   posts: 'posts',
