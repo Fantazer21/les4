@@ -12,13 +12,24 @@ export const getBlogs: RequestHandler = async (req: Request, res: Response) => {
     const pageSize = parseInt(req.query.pageSize as string) || 10;
     const sortBy = (req.query.sortBy as string) || 'createdAt';
     const sortDirection = (req.query.sortDirection as string) === 'asc' ? 1 : -1;
+    const searchNameTerm = req.query.searchNameTerm as string;
+
+    // Create search filter
+    const searchFilter = searchNameTerm 
+      ? { 
+          name: { 
+            $regex: searchNameTerm,
+            $options: 'i' // case-insensitive
+          } 
+        } 
+      : {};
 
     const skip = (pageNumber - 1) * pageSize;
 
-    const totalCount = await collections.blogs?.countDocuments({}) || 0;
+    const totalCount = await collections.blogs?.countDocuments(searchFilter) || 0;
 
     const blogs = await collections.blogs
-      ?.find({}, { projection: { _id: 0 } })
+      ?.find(searchFilter, { projection: { _id: 0 } })
       .sort({ [sortBy]: sortDirection })
       .skip(skip)
       .limit(pageSize)
