@@ -8,8 +8,31 @@ const urlPattern = /^https:\/\/([a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]
 
 export const getBlogs: RequestHandler = async (req: Request, res: Response) => {
   try {
-    const blogs = await collections.blogs?.find({}, { projection: { _id: 0 } }).toArray();
-    res.status(200).json(blogs);
+    const pageNumber = parseInt(req.query.pageNumber as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 10;
+    const sortBy = (req.query.sortBy as string) || 'createdAt';
+    const sortDirection = (req.query.sortDirection as string) === 'asc' ? 1 : -1;
+
+    const skip = (pageNumber - 1) * pageSize;
+
+    const totalCount = await collections.blogs?.countDocuments({}) || 0;
+
+    const blogs = await collections.blogs
+      ?.find({}, { projection: { _id: 0 } })
+      .sort({ [sortBy]: sortDirection })
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
+
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    res.status(200).json({
+      pagesCount,
+      page: pageNumber,
+      pageSize,
+      totalCount,
+      items: blogs || []
+    });
   } catch (error) {
     console.error('❌ Ошибка при получении блогов:', error);
     res.status(500).json({ message: 'Internal Server Error' });

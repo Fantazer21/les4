@@ -5,19 +5,19 @@ import { ObjectId } from 'mongodb';
 
 export const getPosts = async (req: Request, res: Response) => {
   try {
-    // Default pagination values
+    
     const pageNumber = parseInt(req.query.pageNumber as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 10;
     const sortBy = (req.query.sortBy as string) || 'createdAt';
     const sortDirection = (req.query.sortDirection as string) === 'asc' ? 1 : -1;
 
-    // Calculate skip
+    
     const skip = (pageNumber - 1) * pageSize;
 
-    // Get total count
+    
     const totalCount = await collections.posts?.countDocuments({}) || 0;
 
-    // Get posts with pagination and sorting
+    
     const posts = await collections.posts
       ?.find({}, { projection: { _id: 0 } })
       .sort({ [sortBy]: sortDirection })
@@ -25,10 +25,10 @@ export const getPosts = async (req: Request, res: Response) => {
       .limit(pageSize)
       .toArray();
 
-    // Calculate pages count
+    
     const pagesCount = Math.ceil(totalCount / pageSize);
 
-    // Return paginated response
+    
     res.status(200).json({
       pagesCount,
       page: pageNumber,
