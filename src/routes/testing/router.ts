@@ -7,7 +7,7 @@ testingRouter.delete('/testing/all-data', async (_req, res) => {
   try {
     await collections.blogs?.deleteMany({});
     await collections.posts?.deleteMany({});
-
+//test
     res.sendStatus(204);
   } catch (error) {
     console.error('❌ Ошибка при очистке данных:', error);

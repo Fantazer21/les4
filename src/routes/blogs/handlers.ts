@@ -211,3 +211,116 @@ export const deleteBlog: RequestHandler = async (req: Request, res: Response): P
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
+export const createPostForBlog: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const blogId = req.params.id;
+  const { title, shortDescription, content } = req.body;
+
+  const checkToken = `Basic ${btoa('admin:qwerty')}`;
+
+  if (!req.headers || !req.headers.authorization || req.headers.authorization !== checkToken) {
+    res.sendStatus(401);
+    return;
+  }
+
+  // Validate blog exists
+  const blog = await collections.blogs?.findOne({ id: blogId }, { projection: { _id: 0 } });
+  if (!blog) {
+    res.status(404).json({
+      errorsMessages: [{ message: 'Blog not found', field: 'blogId' }],
+    });
+    return;
+  }
+
+  const errors = {
+    errorsMessages: [] as { message: string; field: string }[],
+  };
+
+  if (!title || title.trim() === '' || typeof title !== 'string' || title.trim().length > 30) {
+    errors.errorsMessages.push({
+      message: 'Invalid title length',
+      field: 'title',
+    });
+  }
+
+  if (!shortDescription || shortDescription.trim() === '' || shortDescription.length > 100) {
+    errors.errorsMessages.push({
+      message: 'Invalid short description length',
+      field: 'shortDescription',
+    });
+  }
+
+  if (!content || content.trim() === '' || content.length > 1000) {
+    errors.errorsMessages.push({
+      message: 'Invalid content length',
+      field: 'content',
+    });
+  }
+
+  if (errors.errorsMessages.length) {
+    res.status(400).json(errors);
+    return;
+  }
+
+  const newPost = {
+    id: new Date().getTime().toString(),
+    title,
+    shortDescription,
+    content,
+    blogId,
+    blogName: blog.name,
+    createdAt: new Date().toISOString(),
+  };
+
+  try {
+    await collections.posts?.insertOne({ ...newPost, _id: new ObjectId() });
+    res.status(201).json(newPost);
+  } catch (error) {
+    console.error('❌ Ошибка при создании поста для блога:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const getPostsForBlog: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const blogId = req.params.id;
+
+  // Validate blog exists
+  const blog = await collections.blogs?.findOne({ id: blogId });
+  if (!blog) {
+     res.status(404).json({
+      errorsMessages: [{ message: 'Blog not found', field: 'blogId' }],
+    });
+    return
+  }
+
+  try {
+    const pageNumber = parseInt(req.query.pageNumber as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 10;
+    const sortBy = (req.query.sortBy as string) || 'createdAt';
+    const sortDirection = (req.query.sortDirection as string) === 'asc' ? 1 : -1;
+
+    const skip = (pageNumber - 1) * pageSize;
+
+    const totalCount = await collections.posts?.countDocuments({ blogId }) || 0;
+
+    const posts = await collections.posts
+      ?.find({ blogId }, { projection: { _id: 0 } })
+      .sort({ [sortBy]: sortDirection })
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
+
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    res.status(200).json({
+      pagesCount,
+      page: pageNumber,
+      pageSize,
+      totalCount,
+      items: posts || []
+    });
+  } catch (error) {
+    console.error('❌ Ошибка при получении постов блога:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
