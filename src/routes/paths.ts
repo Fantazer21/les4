@@ -6,4 +6,5 @@ export enum ApiPaths {
   TestingAllData = '/testing/all-data',
   Login = '/auth/login',
   Users = '/users',
+  UserById = '/users/:id',
 }
