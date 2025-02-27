@@ -16,6 +16,13 @@ export type UserInputModel = {
 }
 
 export const createUser: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const checkToken = `Basic ${btoa('admin:qwerty')}`;
+
+  if (!req.headers || !req.headers.authorization || req.headers.authorization !== checkToken) {
+    res.sendStatus(401);
+    return;
+  }
+
   const { login, password, email } = req.body;
 
   const errors = {
