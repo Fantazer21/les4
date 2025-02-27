@@ -7,6 +7,7 @@ testingRouter.delete('/testing/all-data', async (_req, res) => {
   try {
     await collections.blogs?.deleteMany({});
     await collections.posts?.deleteMany({});
+    await collections.users?.deleteMany({});
 //test
     res.sendStatus(204);
   } catch (error) {
