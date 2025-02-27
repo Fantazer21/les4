@@ -29,7 +29,7 @@ export const createUser: RequestHandler = async (req: Request, res: Response): P
     errorsMessages: [] as { message: string; field: string }[]
   };
 
-  // Валидация логина
+
   if (!login || typeof login !== 'string' || login.length < 3 || login.length > 10) {
     errors.errorsMessages.push({
       message: "Login length should be from 3 to 10 symbols",
@@ -37,11 +37,19 @@ export const createUser: RequestHandler = async (req: Request, res: Response): P
     });
   }
 
-  // Валидация пароля
+
   if (!password || typeof password !== 'string' || password.length < 6 || password.length > 20) {
     errors.errorsMessages.push({
       message: "Password length should be from 6 to 20 symbols",
       field: "password"
+    });
+  }
+
+  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
+    errors.errorsMessages.push({
+      message: "Invalid email format",
+      field: "email"
     });
   }
 
@@ -74,13 +82,28 @@ export const getAllUsers: RequestHandler = async (req: Request, res: Response): 
     const pageSize = parseInt(req.query.pageSize as string) || 10;
     const sortBy = (req.query.sortBy as string) || 'createdAt';
     const sortDirection = (req.query.sortDirection as string) === 'asc' ? 1 : -1;
+    const searchLoginTerm = req.query.searchLoginTerm as string;
+    const searchEmailTerm = req.query.searchEmailTerm as string;
 
     const skip = (pageNumber - 1) * pageSize;
 
-    const totalCount = await collections.users?.countDocuments({}) || 0;
+   
+    const filter: any = {};
+    
+    if (searchLoginTerm || searchEmailTerm) {
+      filter.$or = [];
+      if (searchLoginTerm) {
+        filter.$or.push({ login: { $regex: searchLoginTerm, $options: 'i' } });
+      }
+      if (searchEmailTerm) {
+        filter.$or.push({ email: { $regex: searchEmailTerm, $options: 'i' } });
+      }
+    }
+
+    const totalCount = await collections.users?.countDocuments(filter) || 0;
 
     const users = await collections.users
-      ?.find({}, { projection: { _id: 0, password: 0 } })
+      ?.find(filter, { projection: { _id: 0, password: 0 } })
       .sort({ [sortBy]: sortDirection })
       .skip(skip)
       .limit(pageSize)
