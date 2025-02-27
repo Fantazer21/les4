@@ -18,6 +18,31 @@ export type UserInputModel = {
 export const createUser: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { login, password, email } = req.body;
 
+  const errors = {
+    errorsMessages: [] as { message: string; field: string }[]
+  };
+
+  // Валидация логина
+  if (!login || typeof login !== 'string' || login.length < 3 || login.length > 10) {
+    errors.errorsMessages.push({
+      message: "Login length should be from 3 to 10 symbols",
+      field: "login"
+    });
+  }
+
+  // Валидация пароля
+  if (!password || typeof password !== 'string' || password.length < 6 || password.length > 20) {
+    errors.errorsMessages.push({
+      message: "Password length should be from 6 to 20 symbols",
+      field: "password"
+    });
+  }
+
+  if (errors.errorsMessages.length > 0) {
+    res.status(400).json(errors);
+    return;
+  }
+
   const newUser: UserViewModel & { password: string } = {
     id: new Date().getTime().toString(),
     login,
