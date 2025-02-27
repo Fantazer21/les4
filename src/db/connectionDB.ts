@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion, Collection } from 'mongodb';
-import { BlogViewModel, PostViewModel } from '../types';
+import { BlogViewModel, PostViewModel, UserViewModel } from '../types';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -10,6 +10,7 @@ const DB_NAME = 'it-incubator';
 const COLLECTIONS = {
   posts: 'posts',
   blogs: 'blogs',
+  users: 'users',
 } as const;
 
 if (!MONGO_URI) {
@@ -24,12 +25,14 @@ const client = new MongoClient(MONGO_URI, {
   },
 });
 
-export let collections: {
-  posts: Collection<PostViewModel> | null;
+export const collections: {
   blogs: Collection<BlogViewModel> | null;
+  posts: Collection<PostViewModel> | null;
+  users: Collection<UserViewModel & { password: string }> | null;
 } = {
-  posts: null,
   blogs: null,
+  posts: null,
+  users: null,
 };
 
 export const runDb = async () => {
@@ -40,6 +43,8 @@ export const runDb = async () => {
     collections.blogs = db.collection<BlogViewModel>(COLLECTIONS.blogs);
 
     collections.posts = db.collection<PostViewModel>(COLLECTIONS.posts);
+
+    collections.users = db.collection<UserViewModel & { password: string }>(COLLECTIONS.users);
 
     await client.db('admin').command({ ping: 1 });
     console.log('✅ Успешное подключение к MongoDB!');

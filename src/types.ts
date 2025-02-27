@@ -64,6 +64,14 @@ export interface PostViewModel {
   isMembership?: boolean;
 }
 
+export interface UserViewModel {
+  id: string;
+  login: string;
+  email: string;
+  createdAt: string;
+}
+
+
 export interface ApiResponse<T = void> {
   status: number;
   data?: T;

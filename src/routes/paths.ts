@@ -4,4 +4,6 @@ export enum ApiPaths {
   Posts = '/posts',
   PostById = '/posts/:id',
   TestingAllData = '/testing/all-data',
+  Login = '/auth/login',
+  Users = '/users',
 }

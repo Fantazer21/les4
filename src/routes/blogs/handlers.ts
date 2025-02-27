@@ -223,7 +223,7 @@ export const createPostForBlog: RequestHandler = async (req: Request, res: Respo
     return;
   }
 
-  // Validate blog exists
+
   const blog = await collections.blogs?.findOne({ id: blogId }, { projection: { _id: 0 } });
   if (!blog) {
     res.status(404).json({
