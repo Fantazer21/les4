@@ -99,4 +99,31 @@ export const getAllUsers: RequestHandler = async (req: Request, res: Response): 
     console.error('❌ Ошибка при получении пользователей:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
+};
+
+export const deleteUser: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  const checkToken = `Basic ${btoa('admin:qwerty')}`;
+
+  if (!req.headers || !req.headers.authorization || req.headers.authorization !== checkToken) {
+    res.sendStatus(401);
+    return;
+  }
+
+  try {
+    const result = await collections.users?.deleteOne({ id });
+
+    if (!result?.deletedCount) {
+      res.status(404).json({
+        errorsMessages: [{ message: 'User not found', field: 'id' }]
+      });
+      return;
+    }
+
+    res.sendStatus(204);
+  } catch (error) {
+    console.error('❌ Ошибка при удалении пользователя:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 }; 
