@@ -17,7 +17,7 @@ type APIErrorResult = {
 
 export const login: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { loginOrEmail, password } = req.body;
-
+  console.log(req.body);
   const errors: APIErrorResult = {
     errorsMessages: []
   };
