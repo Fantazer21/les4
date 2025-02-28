@@ -1,5 +1,10 @@
 import { Request, Response, RequestHandler } from 'express';
 import { collections } from '../../db/connectionDB';
+import jwt from 'jsonwebtoken';
+
+
+
+const JWT_SECRET = process.env.JWT_SECRET || '123';
 
 type ErrorMessage = {
   message: string;
@@ -54,7 +59,11 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       return;
     }
 
-    res.sendStatus(204);
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({
+      accessToken: token
+    });
   } catch (error) {
     res.status(500).json({ message: 'Internal Server Error' });
   }
