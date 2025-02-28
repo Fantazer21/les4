@@ -66,6 +66,7 @@ export const createPost = async (req: any, res: any) => {
   const { title, shortDescription, content, blogId } = req.body;
 
   const checkToken = `Basic ${btoa('admin:qwerty')}`;
+  console.log(req.headers);
 
   if (!req.headers || !req.headers.authorization || req.headers.authorization !== checkToken) {
     return res.sendStatus(401);
