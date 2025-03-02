@@ -19,29 +19,6 @@ type APIErrorResult = {
 
 export const login: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { loginOrEmail, password } = req.body;
-  console.log(req.body);
-  const errors: APIErrorResult = {
-    errorsMessages: []
-  };
-
-  if (!loginOrEmail || loginOrEmail.trim() === '') {
-    errors.errorsMessages.push({
-      message: 'Login or email is required',
-      field: 'loginOrEmail',
-    });
-  }
-
-  if (!password || password.trim() === '') {
-    errors.errorsMessages.push({
-      message: 'Password is required',
-      field: 'password',
-    });
-  }
-
-  if (errors.errorsMessages.length) {
-    res.status(400).json(errors);
-    return;
-  }
 
   try {
     const user = await collections.users?.findOne({
@@ -51,7 +28,7 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       ]
     });
 
-    if (!user || user.password !== password || !user.isConfirmed) {
+    if (!user || user.password !== password) {
       res.status(401).json({
         errorsMessages: [{
           message: 'Invalid login or password',
@@ -61,7 +38,14 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       return;
     }
 
-    const token = jwt.sign({ userId: user.id, userLogin: user.login }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        userLogin: user.login 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '1h' }
+    );
 
     res.status(200).json({
       accessToken: token
