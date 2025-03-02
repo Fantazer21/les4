@@ -234,24 +234,17 @@ export const deletePost = async (req: any, res: any) => {
 export const createCommentForPost: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const postId = req.params.postId;
   const { content } = req.body;
-  const accessToken = req.headers.authorization?.split(' ')[1];
+  const authHeader = req.headers.authorization;
 
-  if (!accessToken) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.sendStatus(401);
     return;
   }
 
-  try {
-    // const payload = jwt.verify(accessToken, JWT_SECRET) as { 
-    //   userId: string;
-    //   userLogin: string; 
-    // };
-    // const user = await collections.users?.findOne({ id: payload.userId });
+  const accessToken = authHeader.split(' ')[1];
 
-      // if (!user) {
-      //   res.sendStatus(401);
-      //   return;
-      // }
+  try {
+    const payload = jwt.verify(accessToken, JWT_SECRET) as { userId: string; userLogin: string };
 
     const post = await collections.posts?.findOne({ id: postId });
     if (!post) {
@@ -281,8 +274,8 @@ export const createCommentForPost: RequestHandler = async (req: Request, res: Re
       id: new Date().getTime().toString(),
       content,
       commentatorInfo: {
-        userId: 'dsadas',
-        userLogin: 'dsadas'
+        userId: payload.userId,
+        userLogin: payload.userLogin
       },
       createdAt: new Date().toISOString()
     };

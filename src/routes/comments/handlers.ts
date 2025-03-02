@@ -37,6 +37,22 @@ export const updateComment: RequestHandler = async (req: Request, res: Response)
     return;
   }
 
+  const errors = {
+    errorsMessages: [] as { message: string; field: string }[]
+  };
+
+  if (!content || typeof content !== 'string' || content.length < 20 || content.length > 300) {
+    errors.errorsMessages.push({
+      message: 'Content length should be from 20 to 300 symbols',
+      field: 'content'
+    });
+  }
+
+  if (errors.errorsMessages.length) {
+    res.status(400).json(errors);
+    return;
+  }
+
   try {
     const payload = jwt.verify(accessToken, JWT_SECRET) as { userId: string };
     const comment = await collections.comments?.findOne({ id });
@@ -50,22 +66,6 @@ export const updateComment: RequestHandler = async (req: Request, res: Response)
 
     if (comment.commentatorInfo.userId !== payload.userId) {
       res.sendStatus(403);
-      return;
-    }
-
-    const errors = {
-      errorsMessages: [] as { message: string; field: string }[]
-    };
-
-    if (!content || typeof content !== 'string' || content.length < 20 || content.length > 300) {
-      errors.errorsMessages.push({
-        message: 'Content length should be from 20 to 300 symbols',
-        field: 'content'
-      });
-    }
-
-    if (errors.errorsMessages.length) {
-      res.status(400).json(errors);
       return;
     }
 
