@@ -30,12 +30,17 @@ export const getCommentById: RequestHandler = async (req: Request, res: Response
 export const updateComment: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const { content } = req.body;
-  const accessToken = req.headers.authorization?.split(' ')[1];
+  
+  const checkToken = `Basic ${btoa('admin:qwerty')}`;
 
-  if (!accessToken) {
+  if (!req.headers || !req.headers.authorization || req.headers.authorization !== checkToken) {
     res.sendStatus(401);
     return;
   }
+
+
+  const authHeader = req.headers.authorization;
+  const accessToken = authHeader.split(' ')[1];
 
   const errors = {
     errorsMessages: [] as { message: string; field: string }[]
