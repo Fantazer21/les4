@@ -159,25 +159,27 @@ export const registration: RequestHandler = async (req: Request, res: Response):
   }
 
   try {
+    const existingUser = await collections.users?.findOne({
+      $or: [
+        { login },
+        { email }
+      ]
+    });
 
-    const userByEmail = await collections.users?.findOne({ email });
-    if (userByEmail) {
+    if (existingUser) {
+      if (existingUser.login === login) {
+        res.status(400).json({
+          errorsMessages: [{
+            message: 'User with this login already exists',
+            field: 'login'
+          }]
+        });
+        return;
+      }
       res.status(400).json({
         errorsMessages: [{
           message: 'User with this email already exists',
           field: 'email'
-        }]
-      });
-      return;
-    }
-
-    
-    const userByLogin = await collections.users?.findOne({ login });
-    if (userByLogin) {
-      res.status(400).json({
-        errorsMessages: [{
-          message: 'User with this login already exists',
-          field: 'login'
         }]
       });
       return;
@@ -201,7 +203,6 @@ export const registration: RequestHandler = async (req: Request, res: Response):
       await emailAdapter.sendConfirmationEmail(email, confirmationCode);
       res.sendStatus(204);
     } catch (emailError) {
-      // Если не удалось отправить email, удаляем пользователя
       await collections.users?.deleteOne({ id: newUser.id });
       res.status(400).json({
         errorsMessages: [{
