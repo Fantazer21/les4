@@ -159,18 +159,25 @@ export const registration: RequestHandler = async (req: Request, res: Response):
   }
 
   try {
-    const userExists = await collections.users?.findOne({
-      $or: [
-        { login },
-        { email }
-      ]
-    });
 
-    if (userExists) {
+    const userByEmail = await collections.users?.findOne({ email });
+    if (userByEmail) {
       res.status(400).json({
         errorsMessages: [{
-          message: 'User already exists',
-          field: userExists.login === login ? 'login' : 'email'
+          message: 'User with this email already exists',
+          field: 'email'
+        }]
+      });
+      return;
+    }
+
+    
+    const userByLogin = await collections.users?.findOne({ login });
+    if (userByLogin) {
+      res.status(400).json({
+        errorsMessages: [{
+          message: 'User with this login already exists',
+          field: 'login'
         }]
       });
       return;
