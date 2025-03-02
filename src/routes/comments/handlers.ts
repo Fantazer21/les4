@@ -38,11 +38,18 @@ export const updateComment: RequestHandler = async (req: Request, res: Response)
   }
 
   try {
+    const payload = jwt.verify(accessToken, JWT_SECRET) as { userId: string };
     const comment = await collections.comments?.findOne({ id });
+
     if (!comment) {
       res.status(404).json({
         errorsMessages: [{ message: 'Comment not found', field: 'id' }]
       });
+      return;
+    }
+
+    if (comment.commentatorInfo.userId !== payload.userId) {
+      res.sendStatus(403);
       return;
     }
 
@@ -87,15 +94,22 @@ export const deleteComment: RequestHandler = async (req: Request, res: Response)
   }
 
   try {
-    const result = await collections.comments?.deleteOne({ id });
+    const payload = jwt.verify(accessToken, JWT_SECRET) as { userId: string };
+    const comment = await collections.comments?.findOne({ id });
 
-    if (!result?.deletedCount) {
+    if (!comment) {
       res.status(404).json({
         errorsMessages: [{ message: 'Comment not found', field: 'id' }]
       });
       return;
     }
 
+    if (comment.commentatorInfo.userId !== payload.userId) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const result = await collections.comments?.deleteOne({ id });
     res.sendStatus(204);
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
