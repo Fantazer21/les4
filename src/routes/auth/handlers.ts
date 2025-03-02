@@ -127,6 +127,37 @@ export const registrationConfirmation: RequestHandler = async (req: Request, res
 export const registration: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { login, password, email } = req.body;
 
+  const errors: APIErrorResult = {
+    errorsMessages: []
+  };
+
+  if (!login || typeof login !== 'string' || login.length < 3 || login.length > 10) {
+    errors.errorsMessages.push({
+      message: 'Login length should be from 3 to 10 symbols',
+      field: 'login'
+    });
+  }
+
+  if (!password || typeof password !== 'string' || password.length < 6 || password.length > 20) {
+    errors.errorsMessages.push({
+      message: 'Password length should be from 6 to 20 symbols',
+      field: 'password'
+    });
+  }
+
+  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
+    errors.errorsMessages.push({
+      message: 'Invalid email format',
+      field: 'email'
+    });
+  }
+
+  if (errors.errorsMessages.length) {
+    res.status(400).json(errors);
+    return;
+  }
+
   try {
     const userExists = await collections.users?.findOne({
       $or: [
@@ -145,37 +176,6 @@ export const registration: RequestHandler = async (req: Request, res: Response):
       return;
     }
 
-    const errors: APIErrorResult = {
-      errorsMessages: []
-    };
-
-    if (!login || typeof login !== 'string' || login.length < 3 || login.length > 10) {
-      errors.errorsMessages.push({
-        message: 'Login length should be from 3 to 10 symbols',
-        field: 'login'
-      });
-    }
-
-    if (!password || typeof password !== 'string' || password.length < 6 || password.length > 20) {
-      errors.errorsMessages.push({
-        message: 'Password length should be from 6 to 20 symbols',
-        field: 'password'
-      });
-    }
-
-    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
-      errors.errorsMessages.push({
-        message: 'Invalid email format',
-        field: 'email'
-      });
-    }
-
-    if (errors.errorsMessages.length) {
-      res.status(400).json(errors);
-      return;
-    }
-
     const confirmationCode = Date.now().toString();
     
     const newUser = {
@@ -189,19 +189,9 @@ export const registration: RequestHandler = async (req: Request, res: Response):
     };
 
     await collections.users?.insertOne({ ...newUser, _id: new ObjectId() });
+    await emailAdapter.sendConfirmationEmail(email, confirmationCode);
     
-    try {
-      await emailAdapter.sendConfirmationEmail(email, confirmationCode);
-      res.sendStatus(204);
-    } catch (emailError) {
-      await collections.users?.deleteOne({ id: newUser.id });
-      res.status(400).json({
-        errorsMessages: [{
-          message: 'Couldn\'t send email. Try again later',
-          field: 'email'
-        }]
-      });
-    }
+    res.sendStatus(204);
   } catch (error) {
     res.status(500).json({ message: 'Internal Server Error' });
   }
