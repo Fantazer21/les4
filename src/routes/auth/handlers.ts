@@ -188,7 +188,9 @@ export const registration: RequestHandler = async (req: Request, res: Response):
       isConfirmed: false
     };
 
-    await collections.users?.insertOne({ ...newUser, _id: new ObjectId() });
+    console.log("Inserting new user:", newUser);
+await collections.users?.insertOne({ ...newUser, _id: new ObjectId() });
+console.log("User inserted successfully");
     await emailAdapter.sendConfirmationEmail(email, confirmationCode);
     
     res.sendStatus(204);
