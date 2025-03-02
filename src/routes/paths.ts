@@ -9,4 +9,5 @@ export enum ApiPaths {
   UserById = '/users/:id',
   PostComments = '/posts/:postId/comments',
   CommentById = '/comments/:id',
+  CommentsByPostId = '/posts/:postId/comments',
 }
