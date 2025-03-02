@@ -2,6 +2,7 @@ import { Request, Response, RequestHandler } from 'express';
 import { collections } from '../../db/connectionDB';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
+import { emailAdapter } from '../../utils/email-adapter';
 
 
 
@@ -175,19 +176,33 @@ export const registration: RequestHandler = async (req: Request, res: Response):
       return;
     }
 
+    const confirmationCode = Date.now().toString();
+    
     const newUser = {
       id: new Date().getTime().toString(),
       login,
       email,
       password,
       createdAt: new Date().toISOString(),
-      confirmationCode: Date.now().toString(),
+      confirmationCode,
       isConfirmed: false
     };
 
     await collections.users?.insertOne({ ...newUser, _id: new ObjectId() });
     
-    res.sendStatus(204);
+    try {
+      await emailAdapter.sendConfirmationEmail(email, confirmationCode);
+      res.sendStatus(204);
+    } catch (emailError) {
+      // Если не удалось отправить email, удаляем созданного пользователя
+      await collections.users?.deleteOne({ id: newUser.id });
+      res.status(400).json({
+        errorsMessages: [{
+          message: 'Couldn\'t send email. Try again later',
+          field: 'email'
+        }]
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Internal Server Error' });
   }
