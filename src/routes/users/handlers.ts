@@ -24,7 +24,7 @@ export const createUser: RequestHandler = async (req: Request, res: Response): P
   }
 
   const { login, password, email } = req.body;
-
+const a = 0
   const errors = {
     errorsMessages: [] as { message: string; field: string }[]
   };
@@ -68,7 +68,7 @@ export const createUser: RequestHandler = async (req: Request, res: Response): P
 
   try {
     await collections.users?.insertOne({ ...newUser, _id: new ObjectId() });
-    
+
     const { password: _, ...userView } = newUser;
     res.status(201).json(userView);
   } catch (error) {
@@ -87,9 +87,9 @@ export const getAllUsers: RequestHandler = async (req: Request, res: Response): 
 
     const skip = (pageNumber - 1) * pageSize;
 
-   
+
     const filter: any = {};
-    
+
     if (searchLoginTerm || searchEmailTerm) {
       filter.$or = [];
       if (searchLoginTerm) {
@@ -149,4 +149,4 @@ export const deleteUser: RequestHandler = async (req: Request, res: Response): P
     console.error('❌ Ошибка при удалении пользователя:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
-}; 
+};
