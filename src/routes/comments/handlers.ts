@@ -30,17 +30,6 @@ export const getCommentById: RequestHandler = async (req: Request, res: Response
 export const updateComment: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const { content } = req.body;
-  
-  const checkToken = `Basic ${btoa('admin:qwerty')}`;
-
-  if (!req.headers || !req.headers.authorization || req.headers.authorization !== checkToken) {
-    res.sendStatus(401);
-    return;
-  }
-
-
-  const authHeader = req.headers.authorization;
-  const accessToken = authHeader.split(' ')[1];
 
   const errors = {
     errorsMessages: [] as { message: string; field: string }[]
@@ -57,6 +46,15 @@ export const updateComment: RequestHandler = async (req: Request, res: Response)
     res.status(400).json(errors);
     return;
   }
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.sendStatus(401);
+    return;
+  }
+
+  const accessToken = authHeader.split(' ')[1];
 
   try {
     const payload = jwt.verify(accessToken, JWT_SECRET) as { userId: string };
