@@ -51,7 +51,7 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       ]
     });
 
-    if (!user || user.password !== password) {
+    if (!user || user.password !== password || !user.isConfirmed) {
       res.status(401).json({
         errorsMessages: [{
           message: 'Invalid login or password',
@@ -257,7 +257,17 @@ export const registrationEmailResending: RequestHandler = async (req: Request, r
       { $set: { confirmationCode: newConfirmationCode } }
     );
 
-    res.sendStatus(204);
+    try {
+      await emailAdapter.sendConfirmationEmail(email, newConfirmationCode);
+      res.sendStatus(204);
+    } catch (emailError) {
+      res.status(400).json({
+        errorsMessages: [{
+          message: 'Couldn\'t send email. Try again later',
+          field: 'email'
+        }]
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Internal Server Error' });
   }
