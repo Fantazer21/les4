@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion, Collection } from 'mongodb';
-import { BlogViewModel, PostViewModel, UserViewModel } from '../types';
+import { BlogViewModel, PostViewModel, UserViewModel, CommentViewModel, CommentDbModel } from '../types';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,6 +11,7 @@ const COLLECTIONS = {
   posts: 'posts',
   blogs: 'blogs',
   users: 'users',
+  comments: 'comments'
 } as const;
 
 if (!MONGO_URI) {
@@ -29,10 +30,12 @@ export const collections: {
   blogs: Collection<BlogViewModel> | null;
   posts: Collection<PostViewModel> | null;
   users: Collection<UserViewModel & { password: string }> | null;
+  comments: Collection<CommentDbModel> | null;
 } = {
   blogs: null,
   posts: null,
   users: null,
+  comments: null,
 };
 
 export const runDb = async () => {
@@ -45,6 +48,8 @@ export const runDb = async () => {
     collections.posts = db.collection<PostViewModel>(COLLECTIONS.posts);
 
     collections.users = db.collection<UserViewModel & { password: string }>(COLLECTIONS.users);
+
+    collections.comments = db.collection<CommentDbModel>(COLLECTIONS.comments);
 
     await client.db('admin').command({ ping: 1 });
     console.log('✅ Успешное подключение к MongoDB!');

@@ -110,7 +110,7 @@ export const createBlog: RequestHandler = async (req: Request, res: Response): P
   }
 
   const newBlog: BlogViewModel = {
-    id: req.body.id || Date.now().toString(),
+    id: req.body.id || (Date.now() + ''),
     name,
     description,
     websiteUrl,

@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
-import { PostViewModel } from '../../types';
+import { PostViewModel, CommentViewModel } from '../../types';
 import { collections } from '../../db/connectionDB';
 import { ObjectId } from 'mongodb';
+import jwt from 'jsonwebtoken';
+import { RequestHandler } from 'express';
+
+const JWT_SECRET = process.env.JWT_SECRET || '123';
 
 export const getPosts = async (req: Request, res: Response) => {
   try {
@@ -223,6 +227,75 @@ export const deletePost = async (req: any, res: any) => {
     res.sendStatus(204);
   } catch (error) {
     console.error('❌ Ошибка при удалении поста:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const createCommentForPost: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const postId = req.params.postId;
+  const { content } = req.body;
+  const accessToken = req.headers.authorization?.split(' ')[1];
+
+  if (!accessToken) {
+    res.sendStatus(401);
+    return;
+  }
+
+  try {
+    // const payload = jwt.verify(accessToken, JWT_SECRET) as { 
+    //   userId: string;
+    //   userLogin: string; 
+    // };
+    // const user = await collections.users?.findOne({ id: payload.userId });
+
+      // if (!user) {
+      //   res.sendStatus(401);
+      //   return;
+      // }
+
+    const post = await collections.posts?.findOne({ id: postId });
+    if (!post) {
+      res.status(404).json({
+        errorsMessages: [{ message: 'Post not found', field: 'postId' }]
+      });
+      return;
+    }
+
+    const errors = {
+      errorsMessages: [] as { message: string; field: string }[]
+    };
+
+    if (!content || typeof content !== 'string' || content.length < 20 || content.length > 300) {
+      errors.errorsMessages.push({
+        message: 'Content length should be from 20 to 300 symbols',
+        field: 'content'
+      });
+    }
+
+    if (errors.errorsMessages.length) {
+      res.status(400).json(errors);
+      return;
+    }
+
+    const newComment: CommentViewModel = {
+      id: new Date().getTime().toString(),
+      content,
+      commentatorInfo: {
+        userId: 'dsadas',
+        userLogin: 'dsadas'
+      },
+      createdAt: new Date().toISOString()
+    };
+
+    await collections.comments?.insertOne({ ...newComment, postId, _id: new ObjectId() });
+    
+    res.status(201).json(newComment);
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.sendStatus(401);
+      return;
+    }
+    console.error('❌ Ошибка при создании комментария:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };

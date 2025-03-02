@@ -59,7 +59,7 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       return;
     }
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user.id, userLogin: user.login }, JWT_SECRET, { expiresIn: '1h' });
 
     res.status(200).json({
       accessToken: token
@@ -68,3 +68,4 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
     res.status(500).json({ message: 'Internal Server Error' });
   }
 }; 
+

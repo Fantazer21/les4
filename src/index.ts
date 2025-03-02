@@ -6,6 +6,7 @@ import { postsRouter } from './routes/posts/router';
 import { runDb } from './db/connectionDB';
 import { authRouter } from './routes/auth/router';
 import { usersRouter } from './routes/users/router';
+import { commentsRouter } from './routes/comments/router';
 
 const app: Express = express.default();
 const port: number = Number(process.env.PORT) || 3000;
@@ -20,6 +21,7 @@ app.use('/', testingRouter);
 app.use('/', postsRouter);
 app.use('/', authRouter);
 app.use('/', usersRouter);
+app.use('/', commentsRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

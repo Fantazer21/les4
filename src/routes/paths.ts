@@ -7,4 +7,6 @@ export enum ApiPaths {
   Login = '/auth/login',
   Users = '/users',
   UserById = '/users/:id',
+  PostComments = '/posts/:postId/comments',
+  CommentById = '/comments/:id',
 }

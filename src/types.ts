@@ -71,6 +71,19 @@ export interface UserViewModel {
   createdAt: string;
 }
 
+export type CommentViewModel = {
+  id: string;
+  content: string;
+  commentatorInfo: {
+    userId: string;
+    userLogin: string;
+  };
+  createdAt: string;
+}
+
+export type CommentDbModel = CommentViewModel & {
+  postId: string;
+}
 
 export interface ApiResponse<T = void> {
   status: number;
