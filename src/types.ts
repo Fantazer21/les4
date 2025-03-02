@@ -69,6 +69,8 @@ export interface UserViewModel {
   login: string;
   email: string;
   createdAt: string;
+  confirmationCode?: string;
+  isConfirmed?: boolean;
 }
 
 export type CommentViewModel = {

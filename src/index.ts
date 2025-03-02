@@ -4,9 +4,9 @@ import { blogsRouter } from './routes/blogs/router';
 import { testingRouter } from './routes/testing/router';
 import { postsRouter } from './routes/posts/router';
 import { runDb } from './db/connectionDB';
-import { authRouter } from './routes/auth/router';
 import { usersRouter } from './routes/users/router';
 import { commentsRouter } from './routes/comments/router';
+import { authRouter } from './routes/auth/router';
 
 const app: Express = express.default();
 const port: number = Number(process.env.PORT) || 3000;
