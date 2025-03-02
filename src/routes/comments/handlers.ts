@@ -31,22 +31,6 @@ export const updateComment: RequestHandler = async (req: Request, res: Response)
   const { id } = req.params;
   const { content } = req.body;
 
-  const errors = {
-    errorsMessages: [] as { message: string; field: string }[]
-  };
-
-  if (!content || typeof content !== 'string' || content.length < 20 || content.length > 300) {
-    errors.errorsMessages.push({
-      message: 'Content length should be from 20 to 300 symbols',
-      field: 'content'
-    });
-  }
-
-  if (errors.errorsMessages.length) {
-    res.status(400).json(errors);
-    return;
-  }
-
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -72,6 +56,23 @@ export const updateComment: RequestHandler = async (req: Request, res: Response)
       return;
     }
 
+
+    const errors = {
+      errorsMessages: [] as { message: string; field: string }[]
+    };
+
+    if (!content || typeof content !== 'string' || content.length < 20 || content.length > 300) {
+      errors.errorsMessages.push({
+        message: 'Content length should be from 20 to 300 symbols',
+        field: 'content'
+      });
+    }
+
+    if (errors.errorsMessages.length) {
+      res.status(400).json(errors);
+      return;
+    }
+
     await collections.comments?.updateOne(
       { id },
       { $set: { content } }
@@ -86,6 +87,7 @@ export const updateComment: RequestHandler = async (req: Request, res: Response)
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 export const deleteComment: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
