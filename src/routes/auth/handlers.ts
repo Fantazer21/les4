@@ -188,13 +188,23 @@ export const registration: RequestHandler = async (req: Request, res: Response):
       isConfirmed: false
     };
 
-    console.log("Inserting new user:", newUser);
-await collections.users?.insertOne({ ...newUser, _id: new ObjectId() });
-console.log("User inserted successfully");
-    await emailAdapter.sendConfirmationEmail(email, confirmationCode);
+    await collections.users?.insertOne({ ...newUser, _id: new ObjectId() });
     
-    res.sendStatus(204);
+    try {
+      await emailAdapter.sendConfirmationEmail(email, confirmationCode);
+      res.sendStatus(204);
+    } catch (emailError) {
+      // Если не удалось отправить email, удаляем пользователя
+      await collections.users?.deleteOne({ id: newUser.id });
+      res.status(400).json({
+        errorsMessages: [{
+          message: 'Couldn\'t send email. Try again later',
+          field: 'email'
+        }]
+      });
+    }
   } catch (error) {
+    console.error("Error in registration:", error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
