@@ -324,6 +324,7 @@ export const refreshToken: RequestHandler = async (req: Request, res: Response):
   }
 
   try {
+    // Проверяем, не в списке ли невалидных токенов
     const invalidToken = await collections.invalidTokens?.findOne({ token: refreshToken });
     if (invalidToken) {
       res.sendStatus(401);
@@ -337,6 +338,9 @@ export const refreshToken: RequestHandler = async (req: Request, res: Response):
       res.sendStatus(401);
       return;
     }
+
+    // Добавляем использованный токен в список невалидных
+    await collections.invalidTokens?.insertOne({ token: refreshToken });
 
     const newAccessToken = jwt.sign(
       { userId: user.id, userLogin: user.login },
@@ -372,10 +376,21 @@ export const logout: RequestHandler = async (req: Request, res: Response): Promi
   }
 
   try {
+    // Проверяем валидность токена
+    jwt.verify(refreshToken, JWT_SECRET);
+
+    // Проверяем, не в списке ли невалидных токенов
+    const invalidToken = await collections.invalidTokens?.findOne({ token: refreshToken });
+    if (invalidToken) {
+      res.sendStatus(401);
+      return;
+    }
+
+    // Добавляем в список невалидных
     await collections.invalidTokens?.insertOne({ token: refreshToken });
     res.clearCookie('refreshToken');
     res.sendStatus(204);
   } catch (error) {
-    res.sendStatus(500);
+    res.sendStatus(401);
   }
 };
