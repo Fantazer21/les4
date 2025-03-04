@@ -11,7 +11,8 @@ const COLLECTIONS = {
   posts: 'posts',
   blogs: 'blogs',
   users: 'users',
-  comments: 'comments'
+  comments: 'comments',
+  invalidTokens: 'invalidTokens'
 } as const;
 
 if (!MONGO_URI) {
@@ -31,11 +32,13 @@ export const collections: {
   posts: Collection<PostViewModel> | null;
   users: Collection<UserViewModel & { password: string }> | null;
   comments: Collection<CommentDbModel> | null;
+  invalidTokens: Collection<{ token: string }> | null;
 } = {
   blogs: null,
   posts: null,
   users: null,
   comments: null,
+  invalidTokens: null
 };
 
 export const runDb = async () => {
@@ -50,6 +53,8 @@ export const runDb = async () => {
     collections.users = db.collection<UserViewModel & { password: string }>(COLLECTIONS.users);
 
     collections.comments = db.collection<CommentDbModel>(COLLECTIONS.comments);
+
+    collections.invalidTokens = db.collection(COLLECTIONS.invalidTokens);
 
     await client.db('admin').command({ ping: 1 });
     console.log('✅ Успешное подключение к MongoDB!');

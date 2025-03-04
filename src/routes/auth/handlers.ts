@@ -324,6 +324,12 @@ export const refreshToken: RequestHandler = async (req: Request, res: Response):
   }
 
   try {
+    const invalidToken = await collections.invalidTokens?.findOne({ token: refreshToken });
+    if (invalidToken) {
+      res.sendStatus(401);
+      return;
+    }
+
     const payload = jwt.verify(refreshToken, JWT_SECRET) as { userId: string; userLogin: string };
     const user = await collections.users?.findOne({ id: payload.userId });
 
@@ -365,6 +371,11 @@ export const logout: RequestHandler = async (req: Request, res: Response): Promi
     return;
   }
 
-  res.clearCookie('refreshToken');
-  res.sendStatus(204);
+  try {
+    await collections.invalidTokens?.insertOne({ token: refreshToken });
+    res.clearCookie('refreshToken');
+    res.sendStatus(204);
+  } catch (error) {
+    res.sendStatus(500);
+  }
 };
