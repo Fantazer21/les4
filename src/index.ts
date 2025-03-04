@@ -7,12 +7,14 @@ import { runDb } from './db/connectionDB';
 import { usersRouter } from './routes/users/router';
 import { commentsRouter } from './routes/comments/router';
 import { authRouter } from './routes/auth/router';
+import cookieParser from 'cookie-parser';
 
 const app: Express = express.default();
 const port: number = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use(express.static('public'));
 

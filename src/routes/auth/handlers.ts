@@ -38,17 +38,32 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       return;
     }
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       { 
         userId: user.id, 
         userLogin: user.login 
       }, 
       JWT_SECRET, 
-      { expiresIn: '1h' }
+      { expiresIn: '10s' }
     );
 
+    const refreshToken = jwt.sign(
+      { 
+        userId: user.id, 
+        userLogin: user.login 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '20s' }
+    );
+
+  
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true
+    });
+
     res.status(200).json({
-      accessToken: token
+      accessToken
     });
   } catch (error) {
     res.status(500).json({ message: 'Internal Server Error' });
