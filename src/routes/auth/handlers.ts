@@ -314,3 +314,57 @@ export const me: RequestHandler = async (req: Request, res: Response): Promise<v
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
+export const refreshToken: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    res.sendStatus(401);
+    return;
+  }
+
+  try {
+    const payload = jwt.verify(refreshToken, JWT_SECRET) as { userId: string; userLogin: string };
+    const user = await collections.users?.findOne({ id: payload.userId });
+
+    if (!user) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const newAccessToken = jwt.sign(
+      { userId: user.id, userLogin: user.login },
+      JWT_SECRET,
+      { expiresIn: '10s' }
+    );
+
+    const newRefreshToken = jwt.sign(
+      { userId: user.id, userLogin: user.login },
+      JWT_SECRET,
+      { expiresIn: '20s' }
+    );
+
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: true
+    });
+
+    res.status(200).json({
+      accessToken: newAccessToken
+    });
+  } catch (error) {
+    res.sendStatus(401);
+  }
+};
+
+export const logout: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    res.sendStatus(401);
+    return;
+  }
+
+  res.clearCookie('refreshToken');
+  res.sendStatus(204);
+};
