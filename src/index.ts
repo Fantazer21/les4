@@ -8,7 +8,7 @@ import { usersRouter } from './routes/users/router';
 import { commentsRouter } from './routes/comments/router';
 import { authRouter } from './routes/auth/router';
 import cookieParser from 'cookie-parser';
-
+import { securityRouter } from './routes/security/router';
 const app: Express = express.default();
 const port: number = Number(process.env.PORT) || 3000;
 
@@ -24,6 +24,7 @@ app.use('/', postsRouter);
 app.use('/', authRouter);
 app.use('/', usersRouter);
 app.use('/', commentsRouter);
+app.use('/', securityRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

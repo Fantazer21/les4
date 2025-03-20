@@ -33,6 +33,7 @@ export const collections: {
   users: Collection<UserViewModel & { password: string }> | null;
   comments: Collection<CommentDbModel> | null;
   invalidTokens: Collection<{ token: string }> | null;
+  devices?: Collection<any>;
 } = {
   blogs: null,
   posts: null,
@@ -56,12 +57,11 @@ export const runDb = async () => {
 
     collections.invalidTokens = db.collection(COLLECTIONS.invalidTokens);
 
+    collections.devices = db.collection<any>('devices');
+
     await client.db('admin').command({ ping: 1 });
     console.log('✅ Успешное подключение к MongoDB!');
 
-    const blogs = await collections.blogs.find({}).toArray();
-
-    const posts = await collections.posts.find({}).toArray();
   } catch (error) {
     console.error('❌ Ошибка подключения к MongoDB:', error);
     process.exit(1);

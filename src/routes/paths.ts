@@ -15,5 +15,7 @@ export enum ApiPaths {
   CommentById = '/comments/:id',
   CommentsByPostId = '/posts/:postId/comments',
   RefreshToken = '/auth/refresh-token',
-  Logout = '/auth/logout'
+  Logout = '/auth/logout',
+  SecurityDevices = '/security/devices',
+  SecurityDevicesById = '/security/devices/:deviceId',
 }
