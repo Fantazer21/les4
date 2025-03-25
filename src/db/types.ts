@@ -7,4 +7,11 @@ export type DeviceDBModel = {
   userId: string;         // to link device with user
   expirationDate: string; // when refresh token expires
   refreshToken: string;  
+}
+
+export type RequestAttempt = {
+  _id: any;
+  ip: string;
+  endpoint: string;
+  timestamp: Date;
 } 
