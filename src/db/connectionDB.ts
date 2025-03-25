@@ -1,6 +1,7 @@
 import { MongoClient, ServerApiVersion, Collection } from 'mongodb';
-import { BlogViewModel, PostViewModel, UserViewModel, CommentViewModel, CommentDbModel, RequestAttempt } from '../types';
+import { BlogViewModel, PostViewModel, UserViewModel, CommentViewModel, CommentDbModel } from '../types';
 import * as dotenv from 'dotenv';
+import { RequestAttempt } from './types';
 
 dotenv.config();
 
@@ -34,7 +35,7 @@ export const collections: {
   comments: Collection<CommentDbModel> | null;
   invalidTokens: Collection<{ token: string }> | null;
   devices?: Collection<any>;
-  requestAttempts?: Collection<RequestAttempt>;
+  requestAttempts?: Collection<any>;
 } = {
   blogs: null,
   posts: null,
