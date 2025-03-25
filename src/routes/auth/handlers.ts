@@ -19,6 +19,8 @@ type APIErrorResult = {
 
 export const login: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { loginOrEmail, password } = req.body;
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const ip = req.ip;
 
   try {
     const user = await collections.users?.findOne({
@@ -38,24 +40,39 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       return;
     }
 
+    // Генерируем уникальный deviceId
+    const deviceId = new Date().toISOString() + Math.random().toString();
+
     const accessToken = jwt.sign(
-      { 
-        userId: user.id, 
-        userLogin: user.login 
-      }, 
+      { userId: user.id, userLogin: user.login }, 
       JWT_SECRET, 
       { expiresIn: '10s' }
     );
 
+    // Получаем время истечения refreshToken
+    const refreshTokenExpiresIn = 20; // 20 секунд
+    const expirationDate = new Date(Date.now() + refreshTokenExpiresIn * 1000);
+
     const refreshToken = jwt.sign(
       { 
         userId: user.id, 
-        userLogin: user.login 
+        userLogin: user.login,
+        deviceId,
+        exp: Math.floor(expirationDate.getTime() / 1000) // Явно указываем время истечения
       }, 
-      JWT_SECRET, 
-      { expiresIn: '20s' }
+      JWT_SECRET
     );
 
+    // Сохраняем информацию об устройстве
+    await collections.devices?.insertOne({
+      ip,
+      title: userAgent,
+      lastActiveDate: new Date().toISOString(),
+      deviceId,
+      userId: user.id,
+      expirationDate: expirationDate.toISOString(), // Используем то же время истечения
+      refreshToken
+    });
   
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -66,6 +83,7 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
       accessToken
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 }; 
@@ -316,31 +334,34 @@ export const me: RequestHandler = async (req: Request, res: Response): Promise<v
 };
 
 export const refreshToken: RequestHandler = async (req: Request, res: Response): Promise<void> => {
-  const refreshToken = req.cookies.refreshToken;
+  const oldRefreshToken = req.cookies.refreshToken;
 
-  if (!refreshToken) {
+  if (!oldRefreshToken) {
     res.sendStatus(401);
     return;
   }
 
   try {
- 
-    const invalidToken = await collections.invalidTokens?.findOne({ token: refreshToken });
+    const invalidToken = await collections.invalidTokens?.findOne({ token: oldRefreshToken });
     if (invalidToken) {
       res.sendStatus(401);
       return;
     }
 
-    const payload = jwt.verify(refreshToken, JWT_SECRET) as { userId: string; userLogin: string };
-    const user = await collections.users?.findOne({ id: payload.userId });
+    const decoded = jwt.verify(oldRefreshToken, JWT_SECRET) as { 
+      userId: string; 
+      userLogin: string;
+      deviceId: string;
+    };
 
+    const user = await collections.users?.findOne({ id: decoded.userId });
     if (!user) {
       res.sendStatus(401);
       return;
     }
 
-  
-    await collections.invalidTokens?.insertOne({ token: refreshToken });
+    // Добавляем старый токен в черный список
+    await collections.invalidTokens?.insertOne({ token: oldRefreshToken });
 
     const newAccessToken = jwt.sign(
       { userId: user.id, userLogin: user.login },
@@ -348,10 +369,29 @@ export const refreshToken: RequestHandler = async (req: Request, res: Response):
       { expiresIn: '10s' }
     );
 
+    const refreshTokenExpiresIn = 20; // 20 секунд
+    const expirationDate = new Date(Date.now() + refreshTokenExpiresIn * 1000);
+
     const newRefreshToken = jwt.sign(
-      { userId: user.id, userLogin: user.login },
-      JWT_SECRET,
-      { expiresIn: '20s' }
+      { 
+        userId: user.id, 
+        userLogin: user.login,
+        deviceId: decoded.deviceId,
+        exp: Math.floor(expirationDate.getTime() / 1000) // Явно указываем время истечения
+      },
+      JWT_SECRET
+    );
+
+    // Обновляем информацию об устройстве
+    await collections.devices?.updateOne(
+      { deviceId: decoded.deviceId },
+      { 
+        $set: {
+          lastActiveDate: new Date().toISOString(),
+          expirationDate: expirationDate.toISOString(), // Используем то же время истечения
+          refreshToken: newRefreshToken
+        }
+      }
     );
 
     res.cookie('refreshToken', newRefreshToken, {
@@ -376,16 +416,17 @@ export const logout: RequestHandler = async (req: Request, res: Response): Promi
   }
 
   try {
-    
-    jwt.verify(refreshToken, JWT_SECRET);
-    const invalidToken = await collections.invalidTokens?.findOne({ token: refreshToken });
-    if (invalidToken) {
-      res.sendStatus(401);
-      return;
-    }
+    const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
+      userId: string;
+      deviceId: string;
+    };
 
-  
+    // Удаляем устройство
+    await collections.devices?.deleteOne({ deviceId: decoded.deviceId });
+    
+    // Добавляем токен в черный список
     await collections.invalidTokens?.insertOne({ token: refreshToken });
+    
     res.clearCookie('refreshToken');
     res.sendStatus(204);
   } catch (error) {

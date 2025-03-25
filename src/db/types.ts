@@ -1,5 +1,5 @@
 export type DeviceDBModel = {
-  _id: ObjectId;
+  _id: any;
   ip: string;
   title: string;          // from user-agent header
   lastActiveDate: string; // ISO string
