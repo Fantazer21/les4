@@ -6,5 +6,5 @@ export type DeviceDBModel = {
   deviceId: string;       // unique identifier
   userId: string;         // to link device with user
   expirationDate: string; // when refresh token expires
-  refreshToken: string;   // to validate sessions
+  refreshToken: string;  
 } 

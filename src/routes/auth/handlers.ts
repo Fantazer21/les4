@@ -342,6 +342,14 @@ export const refreshToken: RequestHandler = async (req: Request, res: Response):
   }
 
   try {
+    // Проверяем, не был ли токен уже использован
+    const device = await collections.devices?.findOne({ refreshToken: oldRefreshToken });
+    
+    if (!device) {
+      res.sendStatus(401);
+      return;
+    }
+
     const invalidToken = await collections.invalidTokens?.findOne({ token: oldRefreshToken });
     if (invalidToken) {
       res.sendStatus(401);
@@ -416,6 +424,14 @@ export const logout: RequestHandler = async (req: Request, res: Response): Promi
   }
 
   try {
+    // Проверяем, не был ли токен уже использован для обновления
+    const device = await collections.devices?.findOne({ refreshToken });
+    
+    if (!device) {
+      res.sendStatus(401);
+      return;
+    }
+
     const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
       userId: string;
       deviceId: string;
