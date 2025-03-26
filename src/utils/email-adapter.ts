@@ -30,5 +30,23 @@ export const emailAdapter = {
     } catch (error) {
       console.error("Error sending email:", error);
     }
+  },
+
+  async sendPasswordRecoveryEmail(email: string, recoveryCode: string) {
+    try {
+      const html = `
+        <h1>Password Recovery</h1>
+        <p>Recovery code: ${recoveryCode}</p>
+      `;
+
+      await transport.sendMail({
+        from: '"Blog Platform" <6967221@gmail.com>',
+        to: email,
+        subject: 'Password Recovery',
+        html
+      });
+    } catch (error) {
+      console.error("Error sending recovery email:", error);
+    }
   }
 };

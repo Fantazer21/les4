@@ -18,4 +18,6 @@ export enum ApiPaths {
   Logout = '/auth/logout',
   SecurityDevices = '/security/devices',
   SecurityDevicesById = '/security/devices/:deviceId',
+  PasswordRecovery = '/auth/password-recovery',
+  NewPassword = '/auth/new-password',
 }

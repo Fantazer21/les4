@@ -449,3 +449,97 @@ export const logout: RequestHandler = async (req: Request, res: Response): Promi
     res.sendStatus(401);
   }
 };
+
+// Password recovery via Email (send recovery code)
+export const passwordRecovery: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  const errors: APIErrorResult = {
+    errorsMessages: []
+  };
+
+  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
+    errors.errorsMessages.push({
+      message: 'Invalid email format',
+      field: 'email'
+    });
+  }
+
+  if (errors.errorsMessages.length) {
+    res.status(400).json(errors);
+    return;
+  }
+
+  try {
+    const user = await collections.users?.findOne({ email });
+
+    // Для безопасности всегда возвращаем 204, даже если пользователь не найден
+    res.sendStatus(204);
+
+    if (user) {
+      const recoveryCode = Date.now().toString();
+      await collections.users?.updateOne(
+        { id: user.id },
+        { $set: { recoveryCode } }
+      );
+      await emailAdapter.sendPasswordRecoveryEmail(email, recoveryCode);
+    }
+  } catch (error) {
+    console.error('Password recovery error:', error);
+    res.sendStatus(204); // Всё равно возвращаем 204 для безопасности
+  }
+};
+
+// New password confirmation
+export const newPassword: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+  const { newPassword, recoveryCode } = req.body;
+
+  const errors: APIErrorResult = {
+    errorsMessages: []
+  };
+
+  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6 || newPassword.length > 20) {
+    errors.errorsMessages.push({
+      message: 'Password length should be from 6 to 20 symbols',
+      field: 'newPassword'
+    });
+  }
+
+  if (!recoveryCode || typeof recoveryCode !== 'string') {
+    errors.errorsMessages.push({
+      message: 'Recovery code is required',
+      field: 'recoveryCode'
+    });
+  }
+
+  if (errors.errorsMessages.length) {
+    res.status(400).json(errors);
+    return;
+  }
+
+  try {
+    const result = await collections.users?.updateOne(
+      { recoveryCode },
+      { 
+        $set: { password: newPassword },
+        $unset: { recoveryCode: "" }
+      }
+    );
+
+    if (!result?.matchedCount) {
+      res.status(400).json({
+        errorsMessages: [{
+          message: 'Recovery code is incorrect',
+          field: 'recoveryCode'
+        }]
+      });
+      return;
+    }
+
+    res.sendStatus(204);
+  } catch (error) {
+    console.error('New password setting error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
