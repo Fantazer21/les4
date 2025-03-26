@@ -35,8 +35,10 @@ export const emailAdapter = {
   async sendPasswordRecoveryEmail(email: string, recoveryCode: string) {
     try {
       const html = `
-        <h1>Password Recovery</h1>
-        <p>Recovery code: ${recoveryCode}</p>
+        <h1>Password recovery</h1>
+        <p>To finish password recovery please follow the link below:
+          <a href='https://somesite.com/password-recovery?recoveryCode=${recoveryCode}'>recovery password</a>
+        </p>
       `;
 
       await transport.sendMail({
