@@ -450,7 +450,6 @@ export const logout: RequestHandler = async (req: Request, res: Response): Promi
   }
 };
 
-// Password recovery via Email (send recovery code)
 export const passwordRecovery: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;
 
@@ -474,20 +473,22 @@ export const passwordRecovery: RequestHandler = async (req: Request, res: Respon
   try {
     const user = await collections.users?.findOne({ email });
 
-    // Для безопасности всегда возвращаем 204, даже если пользователь не найден
-    res.sendStatus(204);
-
     if (user) {
       const recoveryCode = Date.now().toString();
       await collections.users?.updateOne(
         { id: user.id },
-        { $set: { recoveryCode } }
+        { $set: { 
+          recoveryCode,
+          recoveryCodeExpiration: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+        }}
       );
       await emailAdapter.sendPasswordRecoveryEmail(email, recoveryCode);
     }
+
+    res.sendStatus(204);
   } catch (error) {
     console.error('Password recovery error:', error);
-    res.sendStatus(204); // Всё равно возвращаем 204 для безопасности
+    res.sendStatus(500);
   }
 };
 
