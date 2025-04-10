@@ -21,7 +21,7 @@ export const login: RequestHandler = async (req: Request, res: Response): Promis
   const { loginOrEmail, password } = req.body;
   const userAgent = req.headers['user-agent'] || 'Unknown';
   const ip = req.ip;
-
+console.log("check  ")
   try {
     const user = await collections.users?.findOne({
       $or: [
@@ -492,7 +492,6 @@ export const passwordRecovery: RequestHandler = async (req: Request, res: Respon
   }
 };
 
-// New password confirmation
 export const newPassword: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { newPassword, recoveryCode } = req.body;
 
